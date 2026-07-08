@@ -37,26 +37,39 @@ export default function Products() {
   const [activeSectionId, setActiveSectionId] = useState<string>('waste');
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Monitor active section as user scrolls for the indicator
+  // Monitor active section as user scrolls for the indicator using high-performance IntersectionObserver
   useEffect(() => {
-    const handleScroll = () => {
-      let currentSection = 'waste';
-      const scrollPosition = window.scrollY + window.innerHeight / 3;
-
-      for (const cat of PRODUCT_CATEGORIES) {
-        const element = sectionRefs.current[cat.id];
-        if (element) {
-          const top = element.offsetTop;
-          if (scrollPosition >= top) {
-            currentSection = cat.id;
-          }
-        }
-      }
-      setActiveSectionId(currentSection);
+    const observerOptions = {
+      root: null,
+      rootMargin: '-25% 0px -45% 0px', // Matches the active zone in view
+      threshold: 0
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSectionId(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    PRODUCT_CATEGORIES.forEach((cat) => {
+      const element = sectionRefs.current[cat.id];
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => {
+      PRODUCT_CATEGORIES.forEach((cat) => {
+        const element = sectionRefs.current[cat.id];
+        if (element) {
+          observer.unobserve(element);
+        }
+      });
+    };
   }, []);
 
   // Handle toast timeout
@@ -95,6 +108,18 @@ export default function Products() {
     }
   };
 
+  const scrollToCategory = (id: string) => {
+    const el = sectionRefs.current[id] || document.getElementById(id);
+    if (el) {
+      const offset = 100; // Account for the sticky header
+      const y = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({
+        top: y,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section id="products" className="py-24 md:py-32 bg-[var(--bg-primary)] relative overflow-hidden border-t border-[var(--border-color)] transition-colors duration-300">
       
@@ -128,35 +153,26 @@ export default function Products() {
       </AnimatePresence>
 
       {/* Passive indicator bar showing scroll progress in catalog */}
-      <div className="fixed left-6 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-4 z-40 bg-black/40 backdrop-blur-md border border-[var(--border-color)] p-3 rounded-full shadow-2xl">
+      <div className="fixed left-6 top-1/2 -translate-y-1/2 hidden xl:flex flex-col gap-4 z-40 bg-black/50 backdrop-blur-md border border-[var(--border-color)] p-3 rounded-full shadow-2xl">
         {PRODUCT_CATEGORIES.map((cat) => {
           const isActive = cat.id === activeSectionId;
           return (
             <div
               key={cat.id}
-              className="relative group flex items-center"
+              className="relative group flex items-center h-5"
             >
-              {/* Tooltip */}
-              <div className="absolute left-10 scale-0 group-hover:scale-100 transition-all duration-200 origin-left bg-black text-white text-[10px] uppercase font-bold tracking-wider px-3 py-1.5 rounded-lg border border-brand-yellow/30 whitespace-nowrap shadow-xl">
+              {/* Premium Vertical Aligned Tooltip */}
+              <div className="absolute left-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 translate-x-[-10px] group-hover:translate-x-0 transition-all duration-300 bg-neutral-900/95 text-brand-yellow text-[10px] uppercase font-mono font-bold tracking-widest px-3 py-1.5 rounded-md border border-brand-yellow/30 whitespace-nowrap shadow-xl pointer-events-none z-50">
                 {cat.title}
               </div>
               <button
-                onClick={() => {
-                  const el = sectionRefs.current[cat.id];
-                  if (el) {
-                    const offset = 80;
-                    window.scrollTo({
-                      top: el.offsetTop - offset,
-                      behavior: 'smooth'
-                    });
-                  }
-                }}
+                onClick={() => scrollToCategory(cat.id)}
                 className={`w-3.5 h-3.5 rounded-full transition-all duration-300 border flex items-center justify-center cursor-pointer ${
                   isActive 
-                    ? 'bg-brand-yellow border-brand-yellow scale-125' 
+                    ? 'bg-brand-yellow border-brand-yellow scale-125 shadow-md shadow-brand-yellow/35' 
                     : 'bg-transparent border-neutral-600 hover:border-brand-yellow/60'
                 }`}
-                title={cat.title}
+                aria-label={cat.title}
               >
                 {isActive && <div className="w-1.5 h-1.5 rounded-full bg-black" />}
               </button>
@@ -173,7 +189,7 @@ export default function Products() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: false, amount: 0.15 }}
           transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="text-left mb-16 md:mb-24"
+          className="text-left mb-12"
         >
           <span className="font-mono text-xs uppercase tracking-widest text-brand-yellow font-bold px-3 py-1 bg-brand-yellow/10 border border-brand-yellow/20 rounded-full inline-block mb-4">
             02 // HEAVY EQUIPMENT CATALOG & FABRICATION
@@ -186,6 +202,41 @@ export default function Products() {
           </p>
         </motion.div>
 
+        {/* --- HIGH-PERFORMANCE CATEGORY QUICK-SELECTOR --- */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="mb-20 overflow-x-auto scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0 sticky top-[72px] z-30 py-4 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)]/50"
+        >
+          <div className="flex flex-nowrap md:grid md:grid-cols-4 lg:grid-cols-8 gap-3 min-w-max md:min-w-0">
+            {PRODUCT_CATEGORIES.map((cat) => {
+              const isActive = cat.id === activeSectionId;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => scrollToCategory(cat.id)}
+                  className={`flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all duration-300 group cursor-pointer w-[120px] md:w-auto h-20 flex-shrink-0 ${
+                    isActive
+                      ? 'bg-brand-yellow/10 border-brand-yellow text-brand-yellow shadow-[0_0_15px_rgba(255,204,51,0.12)]'
+                      : 'bg-neutral-900/40 border-neutral-800/85 text-neutral-400 hover:text-neutral-200 hover:border-neutral-700 hover:bg-neutral-800/10'
+                  }`}
+                >
+                  <div className={`p-1.5 rounded-lg mb-1 transition-transform duration-300 group-hover:scale-105 ${
+                    isActive ? 'bg-brand-yellow/20 text-brand-yellow' : 'bg-neutral-800/50 text-neutral-400 group-hover:text-neutral-200'
+                  }`}>
+                    {getIcon(cat.iconName)}
+                  </div>
+                  <span className="text-[9px] uppercase tracking-widest font-bold leading-tight line-clamp-1 truncate w-full px-1 font-mono">
+                    {cat.title.split(' ')[0]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </motion.div>
+
         {/* --- DYNAMIC SCROLL FEED --- */}
         <div className="flex flex-col gap-24 md:gap-36">
           {PRODUCT_CATEGORIES.map((cat, index) => {
@@ -193,8 +244,9 @@ export default function Products() {
             return (
               <div
                 key={cat.id}
+                id={cat.id}
                 ref={(el) => { sectionRefs.current[cat.id] = el; }}
-                className="scroll-mt-24"
+                className="scroll-mt-28"
               >
                 {/* Visual Section Divider & Index Indicator */}
                 <div className="flex items-center gap-4 mb-6 md:mb-10">

@@ -10,8 +10,16 @@ interface ContactProps {
 export default function Contact({ theme }: ContactProps) {
   const [formData, setForm] = useState({ name: '', company: '', email: '', category: 'waste', message: '' });
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSending, setIsSending] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [visibleCount, setVisibleCount] = useState(3);
+  
+  // Web3Forms Setup
+  const [web3Key, setWeb3Key] = useState(() => {
+    return ((import.meta as any).env?.VITE_WEB3FORMS_ACCESS_KEY as string) || localStorage.getItem('web3forms_key') || '';
+  });
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     const handlePrefill = (e: Event) => {
@@ -60,34 +68,86 @@ export default function Contact({ theme }: ContactProps) {
     setCurrentSlide(prev => Math.max(prev - 1, 0));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleKeySave = (key: string) => {
+    const trimmed = key.trim();
+    setWeb3Key(trimmed);
+    localStorage.setItem('web3forms_key', trimmed);
+  };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.email) {
-      const mailSubject = encodeURIComponent(`Specification Request / RFQ from ${formData.company || formData.name}`);
-      const mailBody = encodeURIComponent(
-        `Hi DIME Engineering Team,\n\n` +
-        `I would like to request a specifications review / RFQ.\n\n` +
-        `--- RFQ DETAILS ---\n` +
-        `Name: ${formData.name}\n` +
-        `Company: ${formData.company || 'Not Specified'}\n` +
-        `Sender Email: ${formData.email}\n` +
-        `Category: ${formData.category}\n\n` +
-        `--- SCOPE DETAILS ---\n` +
-        `${formData.message || 'No additional scope details provided.'}\n\n` +
-        `Best regards,\n` +
-        `${formData.name}`
-      );
-      
+    if (!formData.name || !formData.email) return;
+
+    setIsSending(true);
+    setSubmitError(null);
+
+    const mailSubject = `Specification Request / RFQ from ${formData.company || formData.name}`;
+    const emailBodyText = 
+      `Hi DIME Engineering Team,\n\n` +
+      `I would like to request a specifications review / RFQ.\n\n` +
+      `--- RFQ DETAILS ---\n` +
+      `Name: ${formData.name}\n` +
+      `Company: ${formData.company || 'Not Specified'}\n` +
+      `Sender Email: ${formData.email}\n` +
+      `Category: ${formData.category}\n\n` +
+      `--- SCOPE DETAILS ---\n` +
+      `${formData.message || 'No additional scope details provided.'}\n\n` +
+      `Best regards,\n` +
+      `${formData.name}`;
+
+    // 1. If Web3Forms Access Key is provided, attempt direct API delivery
+    if (web3Key && web3Key.trim() !== '') {
+      try {
+        const response = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            access_key: web3Key.trim(),
+            name: formData.name,
+            email: formData.email,
+            subject: mailSubject,
+            message: emailBodyText,
+            from_name: "Dime Machinery Portal"
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          setIsSending(false);
+          setIsSubmitted(true);
+          setForm({ name: '', company: '', email: '', category: 'waste', message: '' });
+          
+          setTimeout(() => {
+            setIsSubmitted(false);
+          }, 6000);
+          return;
+        } else {
+          throw new Error(data.message || 'API request failed');
+        }
+      } catch (err: any) {
+        console.error('Web3Forms delivery failed:', err);
+        setSubmitError(`API Error: ${err?.message || 'Failed to deliver directly'}. Falling back to standard mail client...`);
+        // Fall through to standard mailto client fallback so the user doesn't get blocked
+      }
+    }
+
+    // 2. Fallback / No-key mailto client delivery
+    setTimeout(() => {
+      setIsSending(false);
       setIsSubmitted(true);
       
-      // Open dynamic mail client prefilled to info@dimeequipment.com
-      window.location.href = `mailto:info@dimeequipment.com?subject=${mailSubject}&body=${mailBody}`;
+      const mailtoUrl = `mailto:info@dimeequipment.com?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(emailBodyText)}`;
+      window.location.href = mailtoUrl;
       
       setTimeout(() => {
         setIsSubmitted(false);
         setForm({ name: '', company: '', email: '', category: 'waste', message: '' });
       }, 4000);
-    }
+    }, 1000);
   };
 
   const containerVariants = {
@@ -351,7 +411,62 @@ export default function Contact({ theme }: ContactProps) {
                 </p>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-4">
+                {/* Web3Forms Integration Console */}
+                <div className="p-4 rounded-2xl bg-neutral-900/30 border border-neutral-800/80 flex flex-col gap-3 backdrop-blur-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-2 h-2 rounded-full ${web3Key ? 'bg-emerald-500 animate-pulse shadow-md shadow-emerald-500/30' : 'bg-amber-500 animate-pulse shadow-md shadow-amber-500/30'}`} />
+                      <span className="font-mono text-[9px] text-neutral-400 uppercase tracking-widest font-bold">
+                        Mail Engine: {web3Key ? 'Web3Forms Direct API' : 'Interactive Mailto Client'}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowKeyInput(!showKeyInput)}
+                      className="font-mono text-[9px] uppercase tracking-widest text-brand-yellow hover:text-brand-gold transition cursor-pointer font-bold border-b border-brand-yellow/30 pb-0.5 hover:border-brand-gold"
+                    >
+                      {showKeyInput ? 'Close Setup' : 'Configure Mail'}
+                    </button>
+                  </div>
+
+                  {showKeyInput && (
+                    <div className="flex flex-col gap-2.5 mt-1 border-t border-neutral-800/60 pt-3">
+                      <p className="text-[10px] text-neutral-400 leading-relaxed font-light">
+                        Receive dynamic RFQ submissions directly in your email inbox! Get a free Access Key at <a href="https://web3forms.com/" target="_blank" rel="noreferrer" className="text-brand-yellow hover:underline font-medium">web3forms.com</a>.
+                      </p>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={web3Key}
+                          onChange={(e) => handleKeySave(e.target.value)}
+                          placeholder="Enter your Web3Forms Access Key..."
+                          className="flex-1 px-3 py-2 text-[11px] rounded-lg bg-black/40 border border-neutral-800 text-brand-yellow placeholder-neutral-600 focus:outline-none focus:border-brand-yellow/40 font-mono"
+                        />
+                        {web3Key && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setWeb3Key('');
+                              localStorage.removeItem('web3forms_key');
+                            }}
+                            className="px-3 py-2 text-[10px] rounded-lg bg-neutral-800 hover:bg-neutral-700 text-rose-400 font-bold uppercase tracking-wider font-mono cursor-pointer transition"
+                          >
+                            Clear
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {submitError && (
+                  <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10px] uppercase tracking-wide leading-relaxed">
+                    ⚠️ {submitError}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                 {/* Name / Company Side-by-side */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -432,11 +547,29 @@ export default function Contact({ theme }: ContactProps) {
                 {/* Submit button */}
                 <button
                   type="submit"
-                  className="w-full py-4 mt-2 rounded-xl bg-brand-yellow hover:bg-brand-gold text-black font-display font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-brand-yellow/10 transition cursor-pointer"
+                  disabled={isSending}
+                  className={`w-full py-4 mt-2 rounded-xl text-black font-display font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg transition duration-300 ${
+                    isSending 
+                      ? 'bg-neutral-700 text-neutral-300 cursor-not-allowed shadow-none' 
+                      : 'bg-brand-yellow hover:bg-brand-gold hover:scale-[1.01] active:scale-[0.99] shadow-brand-yellow/10 cursor-pointer'
+                  }`}
                 >
-                  <Send className="w-3.5 h-3.5" /> Send Specifications Request
+                  {isSending ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 text-black mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Verifying Specs & Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" /> Send Specifications Request
+                    </>
+                  )}
                 </button>
               </form>
+              </div>
             )}
           </motion.div>
 

@@ -45,28 +45,37 @@ export default function App() {
     }
   };
 
-  // Monitor scroll positioning to update active navigation state
+  // Monitor scroll positioning to update active navigation state using high-performance IntersectionObserver
   useEffect(() => {
     const sections = ['hero', 'about', 'products', 'services', 'quality', 'projects', 'contact'];
     
-    const handleScroll = () => {
-      const scrollPosition = window.scrollY + 200; // Offset factor
-
-      for (const sectionId of sections) {
-        const el = document.getElementById(sectionId);
-        if (el) {
-          const top = el.offsetTop;
-          const height = el.offsetHeight;
-          if (scrollPosition >= top && scrollPosition < top + height) {
-            setActiveSection(sectionId);
-            break;
-          }
-        }
-      }
+    const observerOptions = {
+      root: null,
+      rootMargin: '-30% 0px -40% 0px', // Target middle horizontal band of viewport
+      threshold: 0
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    sections.forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) observer.observe(el);
+    });
+
+    return () => {
+      sections.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) observer.unobserve(el);
+      });
+    };
   }, []);
 
   return (
