@@ -1,0 +1,6 @@
+{
+  "name": "Dime Equipment",
+  "description": "Dime Machinery & Equipment Co. - Driving Efficiency. Engineering Excellence. Heavy machinery fabrication, transport logistics equipment, and engineering solutions in Qatar.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,130 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --color-brand-yellow: #ffcc33;
+  --color-brand-gold: #ffb72d;
+  --color-brand-dark: #121212;
+  --color-brand-card: rgba(26, 26, 26, 0.7);
+  
+  --animate-spin-slow: spin-slow 20s linear infinite;
+  --animate-pulse-slow: pulse-slow 8s ease-in-out infinite;
+  --animate-liquid-flow: liquid-flow 15s ease infinite;
+
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes pulse-slow {
+    0%, 100% { opacity: 0.2; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.1); }
+  }
+  @keyframes liquid-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+}
+
+/* Modern Industrial Liquid Glass Styles with light/dark variables */
+:root {
+  --bg-primary: #0d0d0f;
+  --bg-secondary: #09090b;
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --border-color: rgba(255, 255, 255, 0.05);
+  --card-bg: rgba(18, 18, 18, 0.7);
+  --card-hover-bg: rgba(255, 255, 255, 0.02);
+  --badge-bg: rgba(255, 204, 51, 0.1);
+  --glass-glow: rgba(255, 204, 51, 0.15);
+  --scrollbar-track: #0d0d0f;
+}
+
+:root.light-theme {
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --text-primary: #121214;
+  --text-secondary: #4b5563;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --card-bg: rgba(255, 255, 255, 0.8);
+  --card-hover-bg: rgba(0, 0, 0, 0.02);
+  --badge-bg: rgba(255, 204, 51, 0.15);
+  --glass-glow: rgba(255, 204, 51, 0.25);
+  --scrollbar-track: #f1f1f1;
+}
+
+.liquid-glass {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.05);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+:root.light-theme .liquid-glass {
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 20px 0 rgba(0, 0, 0, 0.02);
+}
+
+.liquid-glass-yellow {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 204, 51, 0.35);
+  box-shadow: 0 4px 20px 0 rgba(255, 204, 51, 0.02);
+}
+
+:root.light-theme .liquid-glass-yellow {
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 204, 51, 0.45);
+  box-shadow: 0 4px 20px 0 rgba(255, 204, 51, 0.03);
+}
+
+/* Glass edge highlight glows */
+.glass-glow-yellow {
+  position: relative;
+}
+.glass-glow-yellow::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background: linear-gradient(135deg, rgba(255,204,51,0.5) 0%, rgba(255,204,51,0) 40%, rgba(255,204,51,0) 60%, rgba(255,204,51,0.3) 100%);
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Custom horizontal scrollbar for products and completed projects */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 204, 51, 0.35);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 204, 51, 0.65);
+}
+
+/* Text selections matching brand colors */
+::selection {
+  background: #ffcc33;
+  color: #121212;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Clean body styles */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: "Barlow", ui-sans-serif, system-ui, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
