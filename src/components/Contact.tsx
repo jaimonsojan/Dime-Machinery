@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion } from 'motion/react';
-import { Mail, Phone, MapPin, Send, Check, Settings, MessageSquare, Briefcase, Copy, ExternalLink, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Check, Settings, MessageSquare, Briefcase, Copy, ExternalLink, AlertTriangle, ArrowLeft, Linkedin } from 'lucide-react';
 
 // =======================================================================
 // WEB3FORMS ACCESS KEY CONFIGURATION
@@ -232,6 +232,36 @@ export default function Contact({ theme }: ContactProps) {
                     <a href="mailto:info@dimeequipment.com" className="block text-[var(--text-primary)] text-xs md:text-sm font-semibold hover:text-brand-yellow transition">
                       info@dimeequipment.com
                     </a>
+                  </div>
+                </div>
+
+                {/* LinkedIn Professional Network Page */}
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-brand-yellow/5 border border-brand-yellow/20 relative overflow-hidden group hover:border-brand-yellow/40 transition duration-300">
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-brand-yellow/5 rounded-full blur-xl -mr-6 -mt-6 group-hover:bg-brand-yellow/10 transition-colors duration-300 pointer-events-none" />
+                  <div className="flex items-center justify-center p-3 bg-brand-yellow/10 rounded-xl border border-brand-yellow/30 text-brand-yellow flex-shrink-0">
+                    <Linkedin className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="block font-mono text-[9px] uppercase tracking-widest text-brand-yellow font-extrabold">
+                        Professional Network
+                      </span>
+                      <span className="inline-block px-1.5 py-0.2 text-[8px] font-mono font-bold bg-brand-yellow text-black uppercase tracking-wider rounded">
+                        NEW
+                      </span>
+                    </div>
+                    <a 
+                      href="https://www.linkedin.com/company/dime-machinery-equipment" 
+                      target="_blank" 
+                      rel="noreferrer" 
+                      className="inline-flex items-center gap-1.5 text-[var(--text-primary)] text-xs md:text-sm font-bold hover:text-brand-yellow transition group-hover:underline mt-1"
+                    >
+                      DIME Machinery & Equipment
+                      <ExternalLink className="w-3 h-3 text-brand-yellow opacity-70" />
+                    </a>
+                    <span className="block text-[10px] text-[var(--text-secondary)] mt-0.5 font-light">
+                      Follow our corporate feed for fabrication highlights & workshops.
+                    </span>
                   </div>
                 </div>
               </div>
@@ -525,10 +555,20 @@ export default function Contact({ theme }: ContactProps) {
             </div>
           </div>
 
-          {/* Copyrights */}
-          <div className="text-[var(--text-secondary)] font-mono text-[9px] uppercase tracking-widest font-bold">
-            © {new Date().getFullYear()} DIME EQUIPMENT. ALL RIGHTS RESERVED.<br />
-            Gate #17, Street #577(43), Zone #57, Doha Industrial Area, Qatar
+          {/* Copyrights & Social Link */}
+          <div className="flex flex-col items-center md:items-end gap-2 text-center md:text-right">
+            <div className="text-[var(--text-secondary)] font-mono text-[9px] uppercase tracking-widest font-bold">
+              © {new Date().getFullYear()} DIME EQUIPMENT. ALL RIGHTS RESERVED.<br />
+              Gate #17, Street #577(43), Zone #57, Doha Industrial Area, Qatar
+            </div>
+            <a 
+              href="https://www.linkedin.com/company/dime-machinery-equipment"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1.5 font-mono text-[9px] text-brand-yellow hover:text-brand-gold uppercase tracking-widest font-extrabold transition-all duration-300 hover:underline mt-1"
+            >
+              <Linkedin className="w-3.5 h-3.5 text-brand-yellow" /> Follow Us On LinkedIn
+            </a>
           </div>
 
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Menu, X, Settings, Sun, Moon } from 'lucide-react';
+import { Menu, X, Settings, Sun, Moon, Linkedin } from 'lucide-react';
 
 interface HeaderProps {
   onNavClick: (sectionId: string) => void;
@@ -83,8 +83,20 @@ export default function Header({ onNavClick, activeSection, theme, toggleTheme }
           ))}
         </nav>
 
-        {/* Right Side: Theme Switcher & Call to Action */}
-        <div className="hidden md:flex items-center gap-4">
+        {/* Right Side: Theme Switcher, LinkedIn Page & Call to Action */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* LinkedIn Page Link */}
+          <a
+            href="https://www.linkedin.com/company/dime-machinery-equipment"
+            target="_blank"
+            rel="noreferrer"
+            title="Follow DIME on LinkedIn"
+            aria-label="Follow DIME on LinkedIn"
+            className="p-2.5 rounded-full bg-brand-yellow/10 hover:bg-brand-yellow hover:text-black border border-brand-yellow/30 text-brand-yellow transition-all duration-300 cursor-pointer flex items-center justify-center shadow-sm shadow-brand-yellow/5"
+          >
+            <Linkedin className="w-4 h-4" />
+          </a>
+
           {/* Theme Toggle Button */}
           <button
             onClick={toggleTheme}
@@ -113,6 +125,17 @@ export default function Header({ onNavClick, activeSection, theme, toggleTheme }
 
         {/* Mobile Menu Action Row */}
         <div className="md:hidden flex items-center gap-2">
+          {/* LinkedIn Mobile Link */}
+          <a
+            href="https://www.linkedin.com/company/dime-machinery-equipment"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Follow DIME on LinkedIn"
+            className="p-2 rounded-lg bg-brand-yellow/10 border border-brand-yellow/20 text-brand-yellow hover:bg-brand-yellow hover:text-black transition-all cursor-pointer flex items-center justify-center"
+          >
+            <Linkedin className="w-4 h-4" />
+          </a>
+
           {/* Theme Toggle Mobile */}
           <button
             onClick={toggleTheme}
