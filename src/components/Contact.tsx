@@ -1,7 +1,15 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { motion } from 'motion/react';
 import { COMPLETED_PROJECTS } from '../types';
-import { Mail, Phone, MapPin, Send, Check, Settings, MessageSquare, Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Check, Settings, MessageSquare, Briefcase, ChevronLeft, ChevronRight, Copy, ExternalLink, AlertTriangle, ArrowLeft } from 'lucide-react';
+
+// =======================================================================
+// WEB3FORMS ACCESS KEY CONFIGURATION
+// =======================================================================
+// PASTE YOUR WEB3FORMS ACCESS KEY HERE:
+// Get a free Access Key at: https://web3forms.com/
+// Example: const WEB3FORMS_ACCESS_KEY = "1234abcd-12ab-34cd-56ef-1234567890ab";
+const WEB3FORMS_ACCESS_KEY = "7e0db6ed-5b03-4423-9577-47803511b8c5" as string;
 
 interface ContactProps {
   theme?: 'dark' | 'light';
@@ -15,11 +23,23 @@ export default function Contact({ theme }: ContactProps) {
   const [visibleCount, setVisibleCount] = useState(3);
   
   // Web3Forms Setup
-  const [web3Key, setWeb3Key] = useState(() => {
+  const [web3Key, setWeb3Key] = useState<string>(() => {
+    if (WEB3FORMS_ACCESS_KEY && WEB3FORMS_ACCESS_KEY !== "7e0db6ed-5b03-4423-9577-47803511b8c5" && WEB3FORMS_ACCESS_KEY.trim() !== "") {
+      return WEB3FORMS_ACCESS_KEY.trim();
+    }
     return ((import.meta as any).env?.VITE_WEB3FORMS_ACCESS_KEY as string) || localStorage.getItem('web3forms_key') || '';
   });
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  
+  // Submission result tracking states
+  const [lastSubmittedData, setLastSubmittedData] = useState<{
+    subject: string;
+    body: string;
+    to: string;
+  } | null>(null);
+  const [submittedVia, setSubmittedVia] = useState<'api' | 'mailto' | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
     const handlePrefill = (e: Event) => {
@@ -95,6 +115,12 @@ export default function Contact({ theme }: ContactProps) {
       `Best regards,\n` +
       `${formData.name}`;
 
+    setLastSubmittedData({
+      subject: mailSubject,
+      body: emailBodyText,
+      to: 'info@dimeequipment.com'
+    });
+
     // 1. If Web3Forms Access Key is provided, attempt direct API delivery
     if (web3Key && web3Key.trim() !== '') {
       try {
@@ -118,12 +144,9 @@ export default function Contact({ theme }: ContactProps) {
 
         if (response.ok && data.success) {
           setIsSending(false);
+          setSubmittedVia('api');
           setIsSubmitted(true);
           setForm({ name: '', company: '', email: '', category: 'waste', message: '' });
-          
-          setTimeout(() => {
-            setIsSubmitted(false);
-          }, 6000);
           return;
         } else {
           throw new Error(data.message || 'API request failed');
@@ -138,15 +161,11 @@ export default function Contact({ theme }: ContactProps) {
     // 2. Fallback / No-key mailto client delivery
     setTimeout(() => {
       setIsSending(false);
+      setSubmittedVia('mailto');
       setIsSubmitted(true);
       
       const mailtoUrl = `mailto:info@dimeequipment.com?subject=${encodeURIComponent(mailSubject)}&body=${encodeURIComponent(emailBodyText)}`;
       window.location.href = mailtoUrl;
-      
-      setTimeout(() => {
-        setIsSubmitted(false);
-        setForm({ name: '', company: '', email: '', category: 'waste', message: '' });
-      }, 4000);
     }, 1000);
   };
 
@@ -399,67 +418,133 @@ export default function Contact({ theme }: ContactProps) {
             </p>
 
             {isSubmitted ? (
-              <div className="py-16 text-center flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-brand-yellow/10 border border-brand-yellow/20 flex items-center justify-center text-brand-yellow mb-4 animate-bounce">
-                  <Check className="w-8 h-8 stroke-[3]" />
+              submittedVia === 'api' ? (
+                <div className="py-12 text-center flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4 animate-bounce">
+                    <Check className="w-8 h-8 stroke-[3]" />
+                  </div>
+                  <h4 className="font-display font-bold text-[var(--text-primary)] text-lg mb-1">
+                    RFQ Transmitted Directly via API
+                  </h4>
+                  <p className="text-[var(--text-secondary)] text-xs max-w-sm leading-relaxed mb-6">
+                    Thank you! Your specifications were delivered directly to our DIME review inbox using Web3Forms secure background delivery.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setSubmittedVia(null);
+                    }}
+                    className="px-5 py-2.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white font-mono text-[10px] uppercase tracking-widest font-bold cursor-pointer transition"
+                  >
+                    Submit Another RFQ
+                  </button>
                 </div>
-                <h4 className="font-display font-bold text-[var(--text-primary)] text-lg mb-1">
-                  RFQ Received Successfully
-                </h4>
-                <p className="text-[var(--text-secondary)] text-xs max-w-sm leading-relaxed">
-                  Thank you for connecting with DIME. Our engineering review team is currently processing your specifications.
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-4">
-                {/* Web3Forms Integration Console */}
-                <div className="p-4 rounded-2xl bg-neutral-900/30 border border-neutral-800/80 flex flex-col gap-3 backdrop-blur-md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-2 h-2 rounded-full ${web3Key ? 'bg-emerald-500 animate-pulse shadow-md shadow-emerald-500/30' : 'bg-amber-500 animate-pulse shadow-md shadow-amber-500/30'}`} />
-                      <span className="font-mono text-[9px] text-neutral-400 uppercase tracking-widest font-bold">
-                        Mail Engine: {web3Key ? 'Web3Forms Direct API' : 'Interactive Mailto Client'}
-                      </span>
+              ) : (
+                <div className="py-4 flex flex-col gap-5">
+                  <div className="flex items-start gap-3.5 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                    <div className="flex flex-col gap-1">
+                      <h5 className="font-mono text-[11px] font-bold uppercase tracking-widest leading-none">
+                        Launch Device Email Client & Confirm
+                      </h5>
+                      <p className="text-[10px] leading-relaxed font-light text-neutral-300">
+                        We have generated your custom specification file and initiated the mail client. If your email application did not launch automatically, or if you are using browser-based webmail, please copy the details below to email us manually.
+                      </p>
                     </div>
+                  </div>
+
+                  <div className="flex flex-col gap-3 p-4 rounded-2xl bg-neutral-950/50 border border-neutral-800/80">
+                    <div className="flex flex-col gap-1">
+                      <span className="font-mono text-[8px] uppercase tracking-widest text-neutral-500 font-bold">Recipient Email</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-mono text-[11px] text-brand-yellow font-semibold">{lastSubmittedData?.to}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(lastSubmittedData?.to || '');
+                            setCopiedField('to');
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          className="p-1 px-2.5 rounded bg-neutral-900 border border-neutral-800 text-[9px] uppercase tracking-wider font-mono text-neutral-400 hover:text-brand-yellow cursor-pointer flex items-center gap-1 hover:border-brand-yellow/30 transition"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> {copiedField === 'to' ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 border-t border-neutral-800/50 pt-2.5">
+                      <span className="font-mono text-[8px] uppercase tracking-widest text-neutral-500 font-bold">Subject Line</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[11px] text-white font-medium truncate max-w-[220px] sm:max-w-xs">{lastSubmittedData?.subject}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(lastSubmittedData?.subject || '');
+                            setCopiedField('subject');
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          className="p-1 px-2.5 rounded bg-neutral-900 border border-neutral-800 text-[9px] uppercase tracking-wider font-mono text-neutral-400 hover:text-brand-yellow cursor-pointer flex items-center gap-1 hover:border-brand-yellow/30 transition"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> {copiedField === 'subject' ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1 border-t border-neutral-800/50 pt-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[8px] uppercase tracking-widest text-neutral-500 font-bold">Generated Message Body</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(lastSubmittedData?.body || '');
+                            setCopiedField('body');
+                            setTimeout(() => setCopiedField(null), 2000);
+                          }}
+                          className="p-1 px-2.5 rounded bg-neutral-900 border border-neutral-800 text-[9px] uppercase tracking-wider font-mono text-neutral-400 hover:text-brand-yellow cursor-pointer flex items-center gap-1 hover:border-brand-yellow/30 transition"
+                        >
+                          <Copy className="w-3.5 h-3.5" /> {copiedField === 'body' ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                      <pre className="text-[9.5px] p-2.5 rounded bg-black/60 border border-neutral-900 text-neutral-300 font-mono overflow-y-auto max-h-36 whitespace-pre-wrap leading-relaxed mt-1 scrollbar-hide">
+                        {lastSubmittedData?.body}
+                      </pre>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-2.5">
                     <button
                       type="button"
-                      onClick={() => setShowKeyInput(!showKeyInput)}
-                      className="font-mono text-[9px] uppercase tracking-widest text-brand-yellow hover:text-brand-gold transition cursor-pointer font-bold border-b border-brand-yellow/30 pb-0.5 hover:border-brand-gold"
+                      onClick={() => {
+                        if (lastSubmittedData) {
+                          const mailtoUrl = `mailto:${lastSubmittedData.to}?subject=${encodeURIComponent(lastSubmittedData.subject)}&body=${encodeURIComponent(lastSubmittedData.body)}`;
+                          window.location.href = mailtoUrl;
+                        }
+                      }}
+                      className="flex-1 py-3.5 rounded-xl bg-brand-yellow hover:bg-brand-gold text-black font-display font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-brand-yellow/10"
                     >
-                      {showKeyInput ? 'Close Setup' : 'Configure Mail'}
+                      <ExternalLink className="w-3.5 h-3.5" /> Re-trigger Mail App
+                  </button>
+                  
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSubmitted(false);
+                        setSubmittedVia(null);
+                      }}
+                      className="py-3.5 px-6 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white font-mono text-[10px] uppercase tracking-widest font-bold cursor-pointer transition flex items-center justify-center gap-2"
+                    >
+                      <ArrowLeft className="w-3.5 h-3.5" /> Back / Edit Form
                     </button>
                   </div>
 
-                  {showKeyInput && (
-                    <div className="flex flex-col gap-2.5 mt-1 border-t border-neutral-800/60 pt-3">
-                      <p className="text-[10px] text-neutral-400 leading-relaxed font-light">
-                        Receive dynamic RFQ submissions directly in your email inbox! Get a free Access Key at <a href="https://web3forms.com/" target="_blank" rel="noreferrer" className="text-brand-yellow hover:underline font-medium">web3forms.com</a>.
-                      </p>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={web3Key}
-                          onChange={(e) => handleKeySave(e.target.value)}
-                          placeholder="Enter your Web3Forms Access Key..."
-                          className="flex-1 px-3 py-2 text-[11px] rounded-lg bg-black/40 border border-neutral-800 text-brand-yellow placeholder-neutral-600 focus:outline-none focus:border-brand-yellow/40 font-mono"
-                        />
-                        {web3Key && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setWeb3Key('');
-                              localStorage.removeItem('web3forms_key');
-                            }}
-                            className="px-3 py-2 text-[10px] rounded-lg bg-neutral-800 hover:bg-neutral-700 text-rose-400 font-bold uppercase tracking-wider font-mono cursor-pointer transition"
-                          >
-                            Clear
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-[9.5px] text-neutral-500 font-light leading-relaxed mt-2 text-center border-t border-neutral-800/40 pt-3">
+                    💡 <strong>Pro Tip:</strong> Want emails to send silently in the background without launching your device email application? Paste your Web3Forms Access Key into the <strong>WEB3FORMS_ACCESS_KEY</strong> constant inside the code!
+                  </p>
                 </div>
-
+              )
+            ) : (
+              <div className="flex flex-col gap-4">
                 {submitError && (
                   <div className="p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 font-mono text-[10px] uppercase tracking-wide leading-relaxed">
                     ⚠️ {submitError}
