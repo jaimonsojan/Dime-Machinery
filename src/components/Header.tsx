@@ -33,7 +33,6 @@ export default function Header({ onNavClick, activeSection, theme, toggleTheme }
     { id: 'products', label: 'Products' },
     { id: 'services', label: 'Services' },
     { id: 'quality', label: 'QA/QC' },
-    { id: 'projects', label: 'Projects' },
     { id: 'contact', label: 'Contact' }
   ];
 

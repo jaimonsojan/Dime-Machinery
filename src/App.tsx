@@ -47,7 +47,7 @@ export default function App() {
 
   // Monitor scroll positioning to update active navigation state using high-performance IntersectionObserver
   useEffect(() => {
-    const sections = ['hero', 'about', 'products', 'services', 'quality', 'projects', 'contact'];
+    const sections = ['hero', 'about', 'products', 'services', 'quality', 'contact'];
     
     const observerOptions = {
       root: null,
