@@ -56,11 +56,11 @@ export default function Header({ onNavClick, activeSection, theme, toggleTheme }
           onClick={() => handleLinkClick('hero')} 
           className="flex items-center gap-3 group text-left cursor-pointer"
         >
-          <div className="relative h-10 md:h-12 flex items-center justify-center p-1 rounded-lg transition-transform duration-500 group-hover:scale-105">
+          <div className="relative h-14 md:h-18 flex items-center justify-center p-1 rounded-lg transition-transform duration-500 group-hover:scale-105">
             <img 
               src={theme === 'light' ? 'https://dimedoha.com/DMEC/DMEC_LOGO_LIGHT.png' : 'https://dimedoha.com/DMEC/DMEC_LOGO_DARK.png'} 
               alt="DIME Logo" 
-              className="h-9 md:h-11 w-auto object-contain transition-all duration-300"
+              className="h-12 md:h-16 w-auto object-contain transition-all duration-300"
               referrerPolicy="no-referrer"
             />
           </div>
